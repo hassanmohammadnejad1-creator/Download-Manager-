@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>مدیریت دانلود</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e19;--card:#141a2b;--card2:#1b2238;--ink:#eef2fb;--muted:#8591ad;--blue:#2f7bff;--cyan:#19d3ff;--green:#22d38a;--purple:#7c4dff;--red:#ef4444;--line:#222b45}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#05070d}
+body{font-family:Vazirmatn,Tahoma,sans-serif;color:var(--ink);line-height:1.6}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+svg{display:block}
+#app{position:relative;max-width:480px;height:100%;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+.credit{text-align:center;font-size:.8rem;color:var(--muted);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 0}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 8px}
+header h1{display:flex;align-items:center;gap:10px;margin:0;font-size:1.35rem;font-weight:700}
+header h1 svg{color:var(--blue)}
+.scroll{flex:1;overflow-y:auto;padding:8px 16px 170px}
+.summary{display:flex;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px 16px;margin-bottom:16px}
+.ring{position:relative;width:120px;height:120px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring b{font-size:1.9rem;font-weight:700;line-height:1.1}
+.ring small{color:var(--muted);font-size:.78rem}
+.stats{flex:1;display:grid;gap:16px;margin-inline-start:16px;padding-inline-start:16px;border-inline-start:1px solid var(--line)}
+.stat{display:flex;align-items:center;gap:12px}
+.stat svg{color:var(--blue);flex:none}
+.stat b{display:block;font-size:1.15rem;font-weight:500;direction:ltr;text-align:right}
+.stat small{color:var(--muted);font-size:.78rem}
+.tabs{display:flex;background:var(--card);border-radius:99px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 4px;border-radius:99px;color:var(--muted);font-size:.9rem;white-space:nowrap}
+.tabs button[aria-selected=true]{background:var(--blue);color:#fff;font-weight:500}
+#list{display:grid;gap:10px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:20px;padding:12px}
+.ficon{width:54px;height:54px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff}
+.body{flex:1;min-width:0}
+.name{direction:ltr;text-align:left;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info{color:var(--muted);font-size:.85rem}
+.info.err{color:var(--red)}
+.track{height:6px;background:var(--card2);border-radius:99px;overflow:hidden;margin-top:8px}
+.track i{display:block;height:100%;width:0;border-radius:99px;transition:width .25s}
+.track.unk i{width:35%;animation:slide 1.1s linear infinite}
+@keyframes slide{from{margin-inline-start:-35%}to{margin-inline-start:100%}}
+@media (prefers-reduced-motion:reduce){.track.unk i{animation:none;width:100%;opacity:.4}}
+.side{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:62px}
+.row{display:flex;gap:6px}
+.round{width:42px;height:42px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.round.sm{width:32px;height:32px;color:var(--muted)}
+.round.ok{background:var(--green);color:#fff}
+.spd{font-size:.75rem;color:var(--muted);direction:ltr;min-height:1.2em}
+.empty{text-align:center;color:var(--muted);padding:40px 12px;border:1px dashed var(--line);border-radius:20px}
+.fab{position:absolute;right:16px;bottom:calc(98px + env(safe-area-inset-bottom,0px));width:60px;height:60px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px #2f7bff55}
+nav{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;background:var(--card);border-radius:26px;padding:8px}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--muted);font-size:.85rem;position:relative}
+nav button[aria-current=page]{color:var(--blue)}
+nav button[aria-current=page]::after{content:"";position:absolute;bottom:-4px;width:56px;height:3px;border-radius:3px;background:var(--blue)}
+dialog{border:0;border-radius:24px 24px 0 0;background:var(--card);color:var(--ink);width:100%;max-width:480px;margin:auto auto 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
+dialog::backdrop{background:#000a}
+dialog h2{margin:0 0 12px;font-size:1.1rem}
+dialog input{width:100%;direction:ltr;text-align:left;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+dialog p{color:var(--muted);font-size:.8rem;margin:8px 0 14px}
+.btns{display:flex;gap:10px}
+.btns button{flex:1;padding:12px;border-radius:14px;background:var(--card2)}
+.btns .go{background:var(--blue);color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="credit">ساخته شده توسط حسن محمدنژاد شوشتر</div>
+  <header>
+    <h1><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>مدیریت دانلود</h1>
+    <button aria-label="تنظیمات" id="gear"><svg width="30" height="30" viewBox="0 0 24 24" fill="#8591ad"><path d="M19.4 13a7.9 7.9 0 000-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-1.7-1l-.4-2.6h-4l-.4 2.6a7.6 7.6 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a7.9 7.9 0 000 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></svg></button>
+  </header>
+
+  <div class="scroll" id="view"></div>
+
+  <button class="fab" id="add" aria-label="افزودن دانلود"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+
+  <nav>
+    <button data-nav="history"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>تاریخچه</button>
+    <button data-nav="home" aria-current="page"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-2.5v9h-5v-6h-3v6h-5v-9H3z"/></svg>دانلودها</button>
+    <button data-nav="more"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>بیشتر</button>
+  </nav>
+
+  <dialog id="dlg">
+    <form method="dialog" id="f">
+      <h2>دانلود جدید</h2>
+      <input id="url" type="url" required placeholder="https://example.com/file.zip" aria-label="آدرس فایل">
+      <p>سرور باید CORS را مجاز کرده باشد. برای ادامه‌ی دانلود هم باید از Range پشتیبانی کند.</p>
+      <div class="btns"><button type="button" id="cancel">انصراف</button><button class="go" type="submit">شروع دانلود</button></div>
+    </form>
+  </dialog>
+</div>
+
+<script>
+const MAX = 2;
+const items = [];
+let seq = 0, tab = 'active', page = 'home', quota = {used:0, total:0};
+
+const fmt = n => {
+  if (!isFinite(n)) return '—';
+  const u = ['B','KB','MB','GB','TB']; let i = 0;
+  while (n >= 1024 && i < 4) { n /= 1024; i++; }
+  return (i > 1 && n < 100 ? n.toFixed(1) : Math.round(n)) + ' ' + u[i];
+};
+const nameOf = url => { try { return decodeURIComponent(new URL(url).pathname.split('/').pop()) || 'file'; } catch { return 'file'; } };
+const kindOf = n => {
+  const e = (n.split('.').pop() || '').toLowerCase();
+  if (['mp4','mkv','avi','mov','webm'].includes(e)) return 'video';
+  if (['zip','rar','7z','tar','gz','apk'].includes(e)) return 'zip';
+  if (['jpg','jpeg','png','gif','webp','svg'].includes(e)) return 'image';
+  if (e === 'pdf') return 'pdf';
+  return 'file';
+};
+const KIND = {
+  video:{bg:'linear-gradient(135deg,#3b82f6,#2347e8)',bar:'#2f7bff',g:'<path d="M9 8v8l7-4z" fill="#fff"/>'},
+  zip:{bg:'linear-gradient(135deg,#1fe0a0,#0e9f6e)',bar:'#22d38a',g:'<path d="M12 5v2h-2v2h2v2h-2v2h2v1.5a2 2 0 11-2 2V19h4v-2.5a2 2 0 10-2-2" fill="none" stroke="#fff" stroke-width="1.6"/>'},
+  image:{bg:'linear-gradient(135deg,#8b5cf6,#5b3cd6)',bar:'#7c4dff',g:'<path d="M5 18l4.5-6 3 4 2-2.5L19 18z" fill="#fff"/><circle cx="14.5" cy="8.5" r="2" fill="#fff"/>'},
+  pdf:{bg:'linear-gradient(135deg,#f25c5c,#d62f3b)',bar:'#ef4444',g:'<text x="12" y="16" font-size="8.5" font-weight="700" fill="#fff" text-anchor="middle" font-family="sans-serif">PDF</text>'},
+  file:{bg:'linear-gradient(135deg,#64748b,#3f4b63)',bar:'#94a3b8',g:'<path d="M8 9h8M8 12h8M8 15h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>'}
+};
+const ico = {
+  pause:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.5" height="14" rx="1.2"/><rect x="13.5" y="5" width="4.5" height="14" rx="1.2"/></svg>',
+  play:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  check:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  trash:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  down:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>',
+  disk:'<svg width="30" height="30" viewBox="0 0 24 24" fill="#8591ad"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 9c0 1.7 3.6 3 8 3s8-1.3 8-3v3c0 1.7-3.6 3-8 3s-8-1.3-8-3zM4 15c0 1.7 3.6 3 8 3s8-1.3 8-3v3c0 1.7-3.6 3-8 3s-8-1.3-8-3z"/></svg>'
+};
+
+/* ---------- engine ---------- */
+function pump() {
+  let n = items.filter(i => i.state === 'downloading').length;
+  for (const it of items) { if (n >= MAX) break; if (it.state === 'queued') { start(it); n++; } }
+}
+async function start(it) {
+  it.state = 'downloading'; it.err = '';
+  it.ctrl = new AbortController();
+  const headers = it.got > 0 ? { Range: 'bytes=' + it.got + '-' } : {};
+  try {
+    const res = await fetch(it.url, { headers, signal: it.ctrl.signal });
+    if (!res.ok) throw new Error('پاسخ سرور: ' + res.status);
+    if (it.got > 0 && res.status !== 206) { it.chunks = []; it.got = 0; }
+    const len = +res.headers.get('content-length') || 0;
+    it.total = len ? it.got + len : 0;
+    const reader = res.body.getReader();
+    let t0 = performance.now(), b0 = it.got;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      it.chunks.push(value); it.got += value.length;
+      const now = performance.now();
+      if (now - t0 > 500) { it.speed = (it.got - b0) / ((now - t0) / 1000); t0 = now; b0 = it.got; render(); }
+    }
+    save(it); it.state = 'done'; it.speed = 0; it.total = it.got;
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+    it.state = 'error'; it.err = e.message || 'خطای شبکه';
+  }
+  it.ctrl = null; pump(); render();
+}
+function save(it) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(it.chunks)); a.download = it.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+  it.chunks = [];
+}
+function act(id, what) {
+  const it = items.find(i => i.id === id); if (!it) return;
+  if (what === 'pause') { it.ctrl && it.ctrl.abort(); it.state = 'paused'; it.speed = 0; }
+  else if (what === 'resume') it.state = 'queued';
+  else if (what === 'restart') { it.chunks = []; it.got = 0; it.total = 0; it.state = 'queued'; }
+  else if (what === 'cancel') { it.ctrl && it.ctrl.abort(); it.chunks = []; it.speed = 0; it.state = 'canceled'; }
+  else if (what === 'delete') items.splice(items.indexOf(it), 1);
+  pump(); render();
+}
+
+/* ---------- ui ---------- */
+const $view = document.getElementById('view');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const group = { active:['queued','downloading','paused','error'], done:['done'], canceled:['canceled'] };
+
+function itemHTML(it) {
+  const k = KIND[kindOf(it.name)];
+  const pct = it.total ? Math.min(100, Math.round(it.got / it.total * 100)) : (it.state === 'done' ? 100 : 0);
+  const size = it.total ? `${fmt(it.got)} / ${fmt(it.total)}` : fmt(it.got);
+  let info, main = '', second = '';
+  const b = (w, h, c = 'round') => `<button class="${c}" onclick="act(${it.id},'${w}')">${h}</button>`;
+  if (it.state === 'downloading') { info = `${pct}% • ${size}`; main = b('pause', ico.pause, 'round'); second = b('cancel', ico.trash, 'round sm'); }
+  else if (it.state === 'paused') { info = `متوقف • ${size}`; main = b('resume', ico.play); second = b('cancel', ico.trash, 'round sm'); }
+  else if (it.state === 'queued') { info = 'منتظر برای دانلود...'; main = b('resume', ico.play); second = b('cancel', ico.trash, 'round sm'); main = `<span class="round">${ico.play}</span>`; }
+  else if (it.state === 'error') { info = it.err; main = b('resume', ico.play); second = b('cancel', ico.trash, 'round sm'); }
+  else if (it.state === 'done') { info = `100% • ${fmt(it.got)}`; main = `<span class="round ok">${ico.check}</span>`; second = b('delete', ico.trash, 'round sm'); }
+  else { info = 'لغو شد'; main = b('restart', ico.play); second = b('delete', ico.trash, 'round sm'); }
+  const showBar = ['downloading','paused','done','error'].includes(it.state);
+  const unk = it.state === 'downloading' && !it.total;
+  return `<div class="item">
+    <div class="ficon" style="background:${k.bg}"><svg width="30" height="30" viewBox="0 0 24 24">${k.g}</svg></div>
+    <div class="body"><div class="name" title="${esc(it.url)}">${esc(it.name)}</div>
+      <div class="info ${it.state === 'error' ? 'err' : ''}">${esc(info)}</div>
+      ${showBar ? `<div class="track ${unk ? 'unk' : ''}"><i style="background:${k.bar};${unk ? '' : 'width:' + pct + '%'}"></i></div>` : ''}</div>
+    <div class="side"><div class="row">${main}</div><div class="spd">${it.state === 'downloading' && it.speed ? fmt(it.speed) + '/s' : ''}</div>${second ? `<div>${second}</div>` : ''}</div>
+  </div>`;
+}
+
+function ring(p) {
+  const r = 50, c = 2 * Math.PI * r;
+  return `<div class="ring"><svg width="120" height="120" viewBox="0 0 120 120"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f7bff"/><stop offset="1" stop-color="#19d3ff"/></linearGradient></defs>
+    <circle cx="60" cy="60" r="${r}" fill="none" stroke="#1b2238" stroke-width="11"/>
+    <circle cx="60" cy="60" r="${r}" fill="none" stroke="url(#rg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - p / 100)}" style="transition:stroke-dashoffset .3s"/></svg>
+    <div class="c"><b>${p}%</b><small>کل دانلودها</small></div></div>`;
+}
+
+function render() {
+  if (page === 'more') {
+    $view.innerHTML = `<div class="summary" style="display:block"><b>بیشتر</b><p class="info">حداکثر دانلود هم‌زمان: ${MAX}</p>
+      <button class="round" style="width:auto;padding:0 16px;border-radius:14px" onclick="clearFinished()">پاک کردن تکمیل‌شده‌ها و لغوشده‌ها</button></div>`;
+    return;
+  }
+  if (page === 'history') {
+    const h = items.filter(i => ['done','canceled'].includes(i.state));
+    $view.innerHTML = `<div id="list">${h.length ? h.map(itemHTML).join('') : '<div class="empty">تاریخچه خالی است.</div>'}</div>`;
+    return;
+  }
+  const known = items.filter(i => i.total);
+  const sum = known.reduce((s, i) => s + i.total, 0);
+  const p = sum ? Math.round(known.reduce((s, i) => s + i.got, 0) / sum * 100) : 0;
+  const speed = items.reduce((s, i) => s + (i.state === 'downloading' ? i.speed : 0), 0);
+  const cnt = k => items.filter(i => group[k].includes(i.state)).length;
+  const list = items.filter(i => group[tab].includes(i.state));
+  const T = (k, t, svg) => `<button role="tab" aria-selected="${tab === k}" onclick="tab='${k}';render()">${svg}${t}</button>`;
+  $view.innerHTML = `
+  <div class="summary">${ring(p)}
+    <div class="stats">
+      <div class="stat" style="color:var(--blue)">${ico.down}<div><b style="color:var(--ink)">${(speed / 1048576).toFixed(1)} MB/s</b><small style="color:var(--muted)">سرعت دانلود</small></div></div>
+      <div class="stat">${ico.disk}<div><b>${fmt(quota.used)} / ${quota.total ? fmt(quota.total) : '—'}</b><small>فضای ذخیره‌سازی</small></div></div>
+    </div></div>
+  <div class="tabs" role="tablist">
+    ${T('active', 'در حال دانلود', '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>')}
+    ${T('done', 'تکمیل شده', '')}
+    ${T('canceled', 'لغو شده', '')}
+  </div>
+  <div id="list">${list.length ? list.map(itemHTML).join('') : '<div class="empty">' + (tab === 'active' ? 'دانلودی در جریان نیست. با دکمه‌ی + یک لینک اضافه کنید.' : 'موردی وجود ندارد.') + '</div>'}</div>`;
+}
+function clearFinished() { for (let i = items.length - 1; i >= 0; i--) if (['done','canceled'].includes(items[i].state)) items.splice(i, 1); render(); }
+
+/* ---------- wiring ---------- */
+const dlg = document.getElementById('dlg'), urlEl = document.getElementById('url');
+document.getElementById('add').onclick = () => { urlEl.value = ''; dlg.showModal(); urlEl.focus(); };
+document.getElementById('cancel').onclick = () => dlg.close();
+document.getElementById('f').addEventListener('submit', () => {
+  const u = urlEl.value.trim(); if (!u) return;
+  items.push({ id: ++seq, url: u, name: nameOf(u), state: 'queued', chunks: [], got: 0, total: 0, speed: 0, ctrl: null, err: '' });
+  page = 'home'; tab = 'active'; setNav(); pump(); render();
+});
+document.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => { page = b.dataset.nav; setNav(); render(); });
+function setNav() { document.querySelectorAll('[data-nav]').forEach(b => { if (b.dataset.nav === page) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }); }
+document.getElementById('gear').onclick = () => { page = 'more'; setNav(); render(); };
+if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { quota = { used: e.usage || 0, total: e.quota || 0 }; render(); }).catch(() => {});
+setNav(); render();
+</script>
+</body>
+</html>
